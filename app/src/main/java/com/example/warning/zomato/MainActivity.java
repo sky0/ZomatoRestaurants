@@ -263,7 +263,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
 
-        final String baseUrl = "https://developers.zomato.com/api/v2.1/search?lat="+latLong.getLat()+"&lon="+latLong.getLongi();
+        final String baseUrl = "https://developers.zomato.com/api/v2.1/search?lat="+lat+"&lon="+lon;
 
 
         Log.d("latitute",lat+"  "+lon );
