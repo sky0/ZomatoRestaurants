@@ -38,6 +38,7 @@ public class Controller extends Application {
     private RequestQueue requestQueue;
     private ImageLoader imageLoader;
     LruBitmapCache mLruBitmapCache;
+    String lat="28.5280357",lon="77.2569252";
     public static final ArrayList<GetData> data = new ArrayList<>();
 
     public static ProgressDialog progressDialog;
@@ -46,12 +47,11 @@ public class Controller extends Application {
     private static Dialog dialoglogin;
     private static ListAdapter listAdapter;
 
+
     public static synchronized Controller getInstance()
     {
         return mInstance;
     }
-
-
 
 
 

@@ -27,17 +27,18 @@ import java.util.ArrayList;
 
 public class ListAdapter extends BaseAdapter {
 
-    private Activity activity;
+    private Context activity;
     private LayoutInflater inflater;
     ArrayList<GetData>arrayList;
 
     final Handler handler = new Handler();
 
     ImageLoader imageLoader;
-    public ListAdapter(Activity activity,ArrayList<GetData>arrayList)
+    public ListAdapter(Context activity,ArrayList<GetData>arrayList)
     {
         this.activity=activity;
         this.arrayList=arrayList;
+
     }
 
     public int getCount()
