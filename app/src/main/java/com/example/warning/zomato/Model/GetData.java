@@ -10,6 +10,17 @@ public class GetData {
     String rating;
     String image;
     String cuisines;
+    String id;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+
 
     public GetData()
     {
@@ -18,12 +29,14 @@ public class GetData {
     public GetData(String name,
             String rating,
             String image,
-            String cuisines)
+            String cuisines,
+                   String id)
     {
         this.name=name;
         this.rating=rating;
         this.image=image;
         this.cuisines=cuisines;
+        this.id=id;
     }
 
     public String getRating() {
