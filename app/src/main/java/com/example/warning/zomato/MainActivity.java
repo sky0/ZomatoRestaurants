@@ -18,6 +18,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -59,13 +61,248 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     LatLong latLong=new LatLong();
+    ArrayList<LatLong>latLongs=new ArrayList<>();
 
 
     ArrayList<GetData> data = new ArrayList<>();
     private ProgressDialog progressDialog;
     private ListAdapter listAdapter;
     ListView list_item;
-        String lat="28.5280300",lon="77.2569200";
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                // The next two lines tell the new client that “this” current class will handle connection stuff
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                //fourth line adds the LocationServices API endpoint from GooglePlayServices
+                .addApi(LocationServices.API)
+                .build();
+
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                .setFastestInterval(1 * 1000);
+
+
+        list_item = (ListView) findViewById(R.id.list_item);
+        listAdapter = new ListAdapter(this,data);
+        list_item.setAdapter(listAdapter);
+
+        // Showing progress dialog before making http request
+
+        getZomatodata();
+
+        list_item.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("values is",data.get(position).getId());
+//                String res_id=data.get(position).getId();
+//                getRestroDetails(res_id);
+            }
+        });
+
+          }
+
+    public void getZomatodata()
+    {
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.show();
+
+
+//        Log.d("latitute",latLong.getLat()+"  "+latLong.getLongi() );
+//        System.out.println(latLong.getLat()+"   "+ latLong.getLongi());
+
+
+
+        final Handler handler=new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+//                Log.d("Chackeing of latlon",latLongs.get(0).getLat() );
+                final String baseUrl = "https://developers.zomato.com/api/v2.1/search?lat="+latLong.getLat()+"&lon="+latLong.getLongi();
+
+
+
+
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, baseUrl, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+
+                    public void onResponse(JSONObject jsonObject) {
+
+                        Log.v("Job Status 1111", String.valueOf(jsonObject));
+                        Log.d("Response", jsonObject.toString());
+
+                        progressDialog.dismiss();
+                        try {
+
+
+                            for (int i = 0; i < jsonObject.getJSONArray("restaurants").length(); i++) {
+                                JSONObject job = jsonObject.getJSONArray("restaurants").getJSONObject(i);
+                                GetData getData = new GetData();
+                                JSONObject object = job.getJSONObject("restaurant");
+                                getData.setName(object.getString("name"));
+                                getData.setImage(object.getString("featured_image"));
+                                getData.setCuisines(object.getString("cuisines"));
+                                JSONObject object1 = object.getJSONObject("user_rating");
+                                getData.setRating(object1.getString("aggregate_rating"));
+                                JSONObject res = object.getJSONObject("R");
+                                getData.setId(res.getString("res_id"));
+//                        getData.setUrl(object.getString("url"));
+                                data.add(getData);
+
+
+                            }
+//                    Log.d("values are:", data.get(1).getRating());
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Log.v("something not found", "");
+                        }
+
+                        listAdapter.notifyDataSetChanged();
+                    }
+
+                }
+                        , new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        Log.v("campaign error", "");
+
+                    }
+                }
+                ) {
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        Map<String, String> params = new HashMap<String, String>();
+                        params.put("user-key", "08ab197217bfe4d876a3e988d69a6d34");
+                        params.put("Accept", "application/json");
+
+                        return params;
+                    }
+                };
+
+
+// invoke the server to retrieve data
+                Controller.getInstance().addToRequestQueue(request);
+
+
+
+
+            }
+        },1000);
+
+
+
+
+
+
+
+    }
+
+    public void getRestroDetails(final String res_id){
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.show();
+
+
+        final Handler handler=new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+//                Log.d("Chackeing of latlon",latLongs.get(0).getLat() );
+                final String baseUrl = "https://developers.zomato.com/api/v2.1/restaurant?res_id="+res_id;
+
+
+
+
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, baseUrl, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+
+                    public void onResponse(JSONObject jsonObject) {
+
+                        Log.v("Job Status 1111", String.valueOf(jsonObject));
+                        Log.d("Response", jsonObject.toString());
+
+                        progressDialog.dismiss();
+//                        try {
+//
+//
+//                            for (int i = 0; i < jsonObject.getJSONArray("restaurants").length(); i++) {
+//                                JSONObject job = jsonObject.getJSONArray("restaurants").getJSONObject(i);
+//                                GetData getData = new GetData();
+//                                JSONObject object = job.getJSONObject("restaurant");
+//                                getData.setName(object.getString("name"));
+//                                getData.setImage(object.getString("featured_image"));
+//                                getData.setCuisines(object.getString("cuisines"));
+//                                JSONObject object1 = object.getJSONObject("user_rating");
+//                                getData.setRating(object1.getString("aggregate_rating"));
+//                                JSONObject res = object.getJSONObject("R");
+//                                getData.setId(res.getString("res_id"));
+////                        getData.setUrl(object.getString("url"));
+//                                data.add(getData);
+//
+//
+//                            }
+////                    Log.d("values are:", data.get(1).getRating());
+//
+//
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                            Log.v("something not found", "");
+//                        }
+
+
+                    }
+
+                }
+                        , new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+
+                        Log.v("campaign error", "");
+
+                    }
+                }
+                ) {
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        Map<String, String> params = new HashMap<String, String>();
+                        params.put("user-key", "08ab197217bfe4d876a3e988d69a6d34");
+                        params.put("Accept", "application/json");
+
+                        return params;
+                    }
+                };
+
+
+// invoke the server to retrieve data
+                Controller.getInstance().addToRequestQueue(request);
+
+
+
+
+            }
+        },1000);
+
+
+
+
+
+
+    }
     @Override
     protected void onResume() {
         super.onResume();
@@ -124,7 +361,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface arg0, int arg1) {
-                            turnGPSOn();
+                           turnGPSOn();
+
                             //Toast.makeText(MainActivity.this,"You clicked yes button",Toast.LENGTH_LONG).show();
                         }
                     });
@@ -150,7 +388,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 //                lat=String.valueOf(location.getLatitude());
 //                lon=String.valueOf(location.getLongitude());
                 latLong.setLongi(String.valueOf(location.getLongitude()));
-
+                latLongs.add(latLong);
                 Toast.makeText(this,latLong.getLat()+"  "+latLong.getLongi(),Toast.LENGTH_LONG).show();
 //                Appcontroller.setMobileLat(String.valueOf(location.getLatitude()));
 //                Appcontroller.setMobileLong(String.valueOf(location.getLongitude()));
@@ -212,137 +450,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     private void turnGPSOn() {
-        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-
-    }
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                // The next two lines tell the new client that “this” current class will handle connection stuff
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                //fourth line adds the LocationServices API endpoint from GooglePlayServices
-                .addApi(LocationServices.API)
-                .build();
-
-        // Create the LocationRequest object
-        mLocationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(10 * 1000)        // 10 seconds, in milliseconds
-                .setFastestInterval(1 * 1000);
-
-
-        list_item = (ListView) findViewById(R.id.list_item);
-        listAdapter = new ListAdapter(this,data);
-        list_item.setAdapter(listAdapter);
-
-        // Showing progress dialog before making http request
-
-
-
-        getZomatodata();
-
-          }
-
-    public void getZomatodata()
-    {
-
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading...");
-        progressDialog.show();
-        lat=latLong.getLat();
-        lon=latLong.getLongi();
-//        Log.d("latitute",latLong.getLat()+"  "+latLong.getLongi() );
-//        System.out.println(latLong.getLat()+"   "+ latLong.getLongi());
-
-
-
-
-        final String baseUrl = "https://developers.zomato.com/api/v2.1/search?lat="+lat+"&lon="+lon;
-
-
-        Log.d("latitute",lat+"  "+lon );
-
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, baseUrl, null, new Response.Listener<JSONObject>() {
-
-            @Override
-
-            public void onResponse(JSONObject jsonObject) {
-
-                Log.v("Job Status 1111", String.valueOf(jsonObject));
-                Log.d("Response", jsonObject.toString());
-
-                progressDialog.dismiss();
-                try {
-                    Log.d("latitute in the funtion",latLong.getLat()+"  "+latLong.getLongi() );
-                    for (int i = 0; i < jsonObject.getJSONArray("restaurants").length(); i++) {
-                        JSONObject job = jsonObject.getJSONArray("restaurants").getJSONObject(i);
-                        GetData getData = new GetData();
-                        JSONObject object = job.getJSONObject("restaurant");
-                        getData.setName(object.getString("name"));
-                        getData.setImage(object.getString("featured_image"));
-                        getData.setCuisines(object.getString("cuisines"));
-                        JSONObject object1 = object.getJSONObject("user_rating");
-                        getData.setRating(object1.getString("aggregate_rating"));
-//                        getData.setUrl(object.getString("url"));
-                        data.add(getData);
-
-
-                    }
-//                    Log.d("values are:", data.get(1).getRating());
-
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Log.v("something not found", "");
-                }
-
-                listAdapter.notifyDataSetChanged();
-            }
-
-        }
-                , new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-
-                Log.v("campaign error", "");
-
-            }
-        }
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("user-key", "08ab197217bfe4d876a3e988d69a6d34");
-                params.put("Accept", "application/json");
-
-                return params;
-            }
-        };
-
-
-// invoke the server to retrieve data
-        Controller.getInstance().addToRequestQueue(request);
-
-
-
-
-
-
-
-
+        startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS),1);
 
     }
 
 
 
 
-    }
+
+}
 
 
 
